@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktives Quiz: KI-Architekturen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .quiz-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #f9fafb; /* Tailwind gray-50 */
+            border-radius: 0.75rem; /* Tailwind rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Tailwind shadow-lg */
+        }
+        .question-text {
+            font-size: 1.25rem; /* Tailwind text-xl */
+            font-weight: 600; /* Tailwind font-semibold */
+            margin-bottom: 1.5rem; /* Tailwind mb-6 */
+            color: #1f2937; /* Tailwind gray-800 */
+        }
+        .option-button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem 1rem; /* Tailwind p-3 px-4 */
+            margin-bottom: 0.5rem; /* Tailwind mb-2 */
+            border: 1px solid #d1d5db; /* Tailwind border-gray-300 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            background-color: #ffffff; /* Tailwind bg-white */
+            color: #374151; /* Tailwind text-gray-700 */
+            transition: all 0.2s ease-in-out;
+        }
+        .option-button:hover {
+            background-color: #f3f4f6; /* Tailwind bg-gray-100 */
+            border-color: #9ca3af; /* Tailwind border-gray-400 */
+        }
+        .option-button.selected {
+            background-color: #3b82f6; /* Tailwind bg-blue-500 */
+            color: #ffffff; /* Tailwind text-white */
+            border-color: #2563eb; /* Tailwind border-blue-600 */
+        }
+        .option-button.correct {
+            background-color: #10b981; /* Tailwind bg-green-500 */
+            color: #ffffff; /* Tailwind text-white */
+            border-color: #059669; /* Tailwind border-green-600 */
+        }
+        .option-button.incorrect {
+            background-color: #ef4444; /* Tailwind bg-red-500 */
+            color: #ffffff; /* Tailwind text-white */
+            border-color: #dc2626; /* Tailwind border-red-600 */
+        }
+        .feedback-text {
+            margin-top: 1rem; /* Tailwind mt-4 */
+            font-size: 1rem; /* Tailwind text-base */
+            font-weight: 500; /* Tailwind font-medium */
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e5e7eb; /* Tailwind bg-gray-200 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            margin-bottom: 1.5rem; /* Tailwind mb-6 */
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 1rem; /* Tailwind h-4 */
+            background-color: #3b82f6; /* Tailwind bg-blue-500 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            transition: width 0.3s ease-in-out;
+            text-align: center;
+            color: white;
+            font-size: 0.75rem; /* Tailwind text-xs */
+            line-height: 1rem; /* Tailwind leading-4 */
+        }
+        .nav-button {
+            padding: 0.75rem 1.5rem; /* Tailwind py-3 px-6 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            font-weight: 600; /* Tailwind font-semibold */
+            transition: background-color 0.2s ease-in-out;
+        }
+        .nav-button.next {
+            background-color: #3b82f6; /* Tailwind bg-blue-500 */
+            color: #ffffff; /* Tailwind text-white */
+        }
+        .nav-button.next:hover {
+            background-color: #2563eb; /* Tailwind bg-blue-600 */
+        }
+        .nav-button.restart {
+            background-color: #6b7280; /* Tailwind bg-gray-500 */
+            color: #ffffff; /* Tailwind text-white */
+        }
+        .nav-button.restart:hover {
+            background-color: #4b5563; /* Tailwind bg-gray-600 */
+        }
+        .score-text {
+            font-size: 1.5rem; /* Tailwind text-2xl */
+            font-weight: 700; /* Tailwind font-bold */
+            color: #1f2937; /* Tailwind gray-800 */
+            margin-bottom: 1rem; /* Tailwind mb-4 */
+        }
+        .final-message {
+            font-size: 1.125rem; /* Tailwind text-lg */
+            color: #4b5563; /* Tailwind gray-600 */
+            margin-bottom: 1.5rem; /* Tailwind mb-6 */
+        }
+        .no-select {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="quizApp" class="quiz-container">
+        <div id="quizArea">
+            <div id="progressContainer" class="progress-bar-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div id="questionNumber" class="text-sm text-gray-500 mb-2"></div>
+            <div id="question" class="question-text"></div>
+            <div id="options" class="space-y-2"></div>
+            <div id="feedback" class="feedback-text"></div>
+            <button id="nextButton" class="nav-button next mt-6 w-full md:w-auto float-right no-select">Weiter</button>
+        </div>
+
+        <div id="resultArea" class="hidden text-center">
+            <h2 class="score-text">Quiz beendet!</h2>
+            <p id="score" class="final-message"></p>
+            <p id="finalMessage" class="final-message"></p>
+            <button id="restartButton" class="nav-button restart no-select">Quiz neu starten</button>
+        </div>
+    </div>
+
+    <script>
+        // Definition der Quizfragen und -antworten (nur KI-Architekturen)
+        const quizData = [
+            {
+                question: "Welches Beispiel für eine Architektur oder ein Modell der Generativen KI wird in der Quelle genannt?",
+                options: [
+                    { text: "Spam-Erkennung.", correct: false },
+                    { text: "Generative Adversarial Networks (GANs).", correct: true },
+                    { text: "Textklassifikation.", correct: false },
+                    { text: "Reinforcement Learning.", correct: false }
+                ]
+            },
+            {
+                question: "Welche Architekturen eignen sich laut Quelle besonders gut für die Verarbeitung sequenzieller Daten?",
+                options: [
+                    { text: "CNNs (Convolutional Neural Networks) und GANs (Generative Adversarial Networks).", correct: false },
+                    { text: "Transformer-Modelle (ohne besondere Berücksichtigung der Reihenfolge).", correct: false },
+                    { text: "Recurrent Neural Networks (RNN) und Long Short-Term Memory (LSTM).", correct: true },
+                    { text: "Perzeptronen und Mehrschichtige Perzeptronen (MLP).", correct: false }
+                ]
+            },
+            {
+                question: "Für welche Art von Aufgaben sind CNNs (Convolutional Neural Networks) laut Quelle besonders effektiv?",
+                options: [
+                    { text: "Verarbeitung von Texten und maschinelles Übersetzen.", correct: false },
+                    { text: "Verarbeitung sequenzieller Daten wie Sprache.", correct: false },
+                    { text: "Bilderkennung und -klassifikation.", correct: true },
+                    { text: "Erzeugung von Musik.", correct: false }
+                ]
+            },
+            {
+                question: "Für welche Hauptaufgabe wurde das Perzeptron hauptsächlich entwickelt?",
+                options: [
+                    { text: "Verarbeitung komplexer Muster in Bildern.", correct: false },
+                    { text: "Regression, um kontinuierliche Werte vorherzusagen.", correct: false },
+                    { text: "Binäre Klassifikationsaufgaben.", correct: true },
+                    { text: "Verarbeitung und Generierung von Texten.", correct: false }
+                ]
+            },
+            {
+                question: "Wie erweitern Mehrschichtige Perzeptronen (MLP) laut Quelle das ursprüngliche Perzeptron-Modell?",
+                options: [
+                    { text: "Durch die ausschliessliche Spezialisierung auf Bilderkennung.", correct: false },
+                    { text: "Durch die Einführung eines Aufmerksamkeitsmechanismus.", correct: false },
+                    { text: "Durch zusätzliche Schichten von Neuronen, die es ermöglichen, komplexere Beziehungen in den Daten zu erfassen.", correct: true },
+                    { text: "Indem sie nur für unüberwachtes Lernen eingesetzt werden können.", correct: false }
+                ]
+            },
+            {
+                question: "Welche Merkmale zeichnen Transformer-Modelle im Vergleich zu früheren Modellen laut Quelle besonders aus?",
+                options: [
+                    { text: "Ihre ausschliessliche Eignung für binäre Klassifikationsaufgaben.", correct: false },
+                    { text: "Die Einführung des Aufmerksamkeitsmechanismus und die Berücksichtigung der Wortposition durch Positional Encodings.", correct: true },
+                    { text: "Sie sind primär für die Verarbeitung sequenzieller Daten konzipiert, ohne den Gesamtkontext zu berücksichtigen.", correct: false },
+                    { text: "Sie basieren ausschliesslich auf dem Perzeptron-Modell ohne zusätzliche Schichten.", correct: false }
+                ]
+            }
+        ];
+
+        // DOM-Elemente
+        const quizArea = document.getElementById('quizArea');
+        const resultArea = document.getElementById('resultArea');
+        const questionEl = document.getElementById('question');
+        const optionsEl = document.getElementById('options');
+        const feedbackEl = document.getElementById('feedback');
+        const nextButton = document.getElementById('nextButton');
+        const restartButton = document.getElementById('restartButton');
+        const scoreEl = document.getElementById('score');
+        const finalMessageEl = document.getElementById('finalMessage');
+        const questionNumberEl = document.getElementById('questionNumber');
+        const progressBarEl = document.getElementById('progressBar');
+
+        // Quiz-Status
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOptionButton = null;
+        let answerChecked = false;
+
+        // Funktion zum Laden einer Frage
+        function loadQuestion() {
+            answerChecked = false;
+            selectedOptionButton = null;
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionEl.textContent = currentQuestion.question;
+            questionNumberEl.textContent = `Frage ${currentQuestionIndex + 1} von ${quizData.length}`;
+            
+            const progressPercentage = ((currentQuestionIndex + 1) / quizData.length) * 100;
+            progressBarEl.style.width = `${progressPercentage}%`;
+            progressBarEl.textContent = `${Math.round(progressPercentage)}%`;
+
+            optionsEl.innerHTML = ''; 
+            feedbackEl.textContent = ''; 
+            nextButton.textContent = 'Antwort prüfen';
+            nextButton.disabled = true; 
+
+            currentQuestion.options.forEach((option) => {
+                const button = document.createElement('button');
+                button.textContent = option.text;
+                button.classList.add('option-button', 'no-select');
+                button.dataset.correct = option.correct;
+                button.addEventListener('click', () => selectOption(button));
+                optionsEl.appendChild(button);
+            });
+        }
+
+        // Funktion zur Auswahl einer Option
+        function selectOption(button) {
+            if (answerChecked) return; 
+
+            if (selectedOptionButton) {
+                selectedOptionButton.classList.remove('selected');
+            }
+            selectedOptionButton = button;
+            selectedOptionButton.classList.add('selected');
+            nextButton.disabled = false;
+        }
+
+        // Funktion zur Überprüfung der Antwort
+        function checkAnswer() {
+            if (!selectedOptionButton) return; 
+
+            answerChecked = true;
+            const isCorrect = selectedOptionButton.dataset.correct === 'true';
+
+            Array.from(optionsEl.children).forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('selected');
+                if (btn.dataset.correct === 'true') {
+                    btn.classList.add('correct');
+                }
+            });
+            
+            if (isCorrect) {
+                score++;
+                // Die korrekte Auswahl wurde bereits im Loop oben als 'correct' markiert.
+                // Falls die ausgewählte Schaltfläche die korrekte ist, wird sie also grün.
+                feedbackEl.textContent = 'Richtig!';
+                feedbackEl.style.color = '#10b981';
+            } else {
+                selectedOptionButton.classList.add('incorrect'); // Nur die falsche Auswahl rot markieren
+                feedbackEl.textContent = 'Falsch.';
+                feedbackEl.style.color = '#ef4444';
+            }
+            
+            if (currentQuestionIndex < quizData.length - 1) {
+                nextButton.textContent = 'Nächste Frage';
+            } else {
+                nextButton.textContent = 'Ergebnisse anzeigen';
+            }
+        }
+        
+        // Event-Listener für den Weiter/Prüfen-Button
+        nextButton.addEventListener('click', () => {
+            if (!answerChecked) {
+                checkAnswer();
+            } else {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.length) {
+                    loadQuestion();
+                } else {
+                    showResults();
+                }
+            }
+        });
+
+        // Funktion zur Anzeige der Ergebnisse
+        function showResults() {
+            quizArea.classList.add('hidden');
+            resultArea.classList.remove('hidden');
+            scoreEl.textContent = `Dein Ergebnis: ${score} von ${quizData.length} Fragen richtig beantwortet.`;
+            
+            const percentage = (score / quizData.length) * 100;
+            let message = "";
+            if (percentage === 100) {
+                message = "Exzellent! Du bist ein Experte für KI-Architekturen!";
+            } else if (percentage >= 75) {
+                message = "Sehr gut! Du kennst dich gut mit KI-Architekturen aus.";
+            } else if (percentage >= 50) {
+                message = "Gut gemacht! Es gibt noch einiges zu lernen über KI-Architekturen.";
+            } else {
+                message = "Da ist noch Luft nach oben. Versuche es gerne erneut!";
+            }
+            finalMessageEl.textContent = message;
+        }
+
+        // Event-Listener für den Neustart-Button
+        restartButton.addEventListener('click', () => {
+            currentQuestionIndex = 0;
+            score = 0;
+            resultArea.classList.add('hidden');
+            quizArea.classList.remove('hidden');
+            loadQuestion();
+        });
+
+        // Initiales Laden der ersten Frage
+        loadQuestion();
+    </script>
+</body>
+</html>
